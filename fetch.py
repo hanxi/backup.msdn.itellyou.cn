@@ -59,7 +59,7 @@ def GetProduct(productId):
     payload = {"id": productId}
     r = requests.post(url, headers=headers, params=payload, timeout=30)
     #print(productId, r.content)
-    return r.content
+    return json.loads(r.content)
 
 #indexId = "36d3766e-0efb-491e-961b-d1a419e06c68"
 #data = GetIndex(indexId)
@@ -83,11 +83,23 @@ def Run():
                     productListData = GetList(langId, sublangId)
                     if productListData["status"]:
                         for i in productListData["result"]:
-                            subname = i["name"]
-                            ed2k = i["url"] or ""
-                            tmp = re.findall("\d+", i["post"])
-                            ts = int(tmp[0])/1000
-                            time = datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-                            print(u"{0},{1},{2},{3},{4},{5}". format(indexName, submenuName, lang, subname, time, ed2k))
+                            subname = i["name"].replace('"', '""')
+                            productId = i["id"]
+                            try:
+                                product = GetProduct(productId)
+                                if product["status"]:
+                                    download = product["result"]["DownLoad"]
+                                    time = product["result"]["PostDateString"]
+                                    sha1 = product["result"]["SHA1"]
+                                    size = product["result"]["size"]
+                                    print(u'"{0}","{1}","{2}","{3}","{4}","{5}","{6}","{7}"'. format(indexName, submenuName, lang, subname, time, download, sha1, size))
+                            except:
+                                download = i["url"] or ""
+                                tmp = re.findall("\d+", i["post"])
+                                ts = int(tmp[0])/1000
+                                time = datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d')
+                                sha1 = "未知"
+                                size = "未知"
+                                print(u'"{0}","{1}","{2}","{3}","{4}","{5}","{6}","{7}"'. format(indexName, submenuName, lang, subname, time, download, sha1, size))
 Run()
 
